@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AutoCare AI | Vehicle Maintenance Intelligence</title>
+<meta name="description" content="AutoCare AI - Car Maintenance Prediction academic project">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+<header class="nav">
+  <a class="brand" href="#home">
+    <span class="brand-mark">A</span>
+    <span><b>AutoCare</b><small>Vehicle Intelligence</small></span>
+  </a>
+  <nav>
+    <a class="active" href="#home">Dashboard</a>
+    <a href="#predict">Prediction</a>
+    <a href="#how">How it works</a>
+    <a href="#iks">IKS</a>
+    <a href="#about">About</a>
+  </nav>
+  <div class="online"><i></i> System Online</div>
+</header>
+
+<main>
+<section id="home" class="hero">
+  <div class="hero-copy">
+    <div class="eyebrow"><span></span> PREDICTIVE VEHICLE MAINTENANCE</div>
+    <h1>Know your car.<br><em>Maintain it smarter.</em></h1>
+    <p>AutoCare analyzes basic vehicle health indicators and converts them into a clear maintenance risk score and practical service recommendation.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="#predict">Run prediction <b>↗</b></a>
+      <a class="text-btn" href="#how">Explore the system <span>↓</span></a>
+    </div>
+    <div class="trust">
+      <span>✓ Explainable model</span>
+      <span>✓ Python Flask</span>
+      <span>✓ Academic prototype</span>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="orb"></div><div class="ring r1"></div><div class="ring r2"></div>
+    <div class="vehicle">
+      <div class="roof"></div><div class="glass g1"></div><div class="glass g2"></div>
+      <div class="wheel w1"></div><div class="wheel w2"></div>
+    </div>
+    <div class="floating-card top">
+      <span>VEHICLE HEALTH</span><b>Predictive</b><small>Maintenance intelligence</small>
+    </div>
+    <div class="floating-card bottom">
+      <span>RISK ENGINE</span><strong>0—100</strong><small>Weighted health score</small>
+    </div>
+  </div>
+</section>
+
+<section class="metrics">
+  <div><b>7+</b><span>Vehicle factors</span></div>
+  <div><b>0–100</b><span>Risk scale</span></div>
+  <div><b>3</b><span>Risk levels</span></div>
+  <div><b>Python</b><span>Backend engine</span></div>
+</section>
+
+<section id="predict" class="section">
+  <div class="section-head">
+    <div>
+      <div class="eyebrow"><span></span> PREDICTION ENGINE</div>
+      <h2>Vehicle health assessment</h2>
+    </div>
+    <p>Enter the available vehicle information. The Python prediction engine calculates a transparent maintenance risk score.</p>
+  </div>
+
+  <div class="predict-grid">
+    <form class="panel form-panel" method="post" id="predictionForm">
+      <div class="panel-title">
+        <div><span>01</span><h3>Vehicle information</h3></div>
+        <small>Required fields</small>
+      </div>
+
+      <div class="fields">
+        <label>Car age <small>Years</small>
+          <input type="number" name="age" min="0" max="50" value="{{ data.age }}" required>
+        </label>
+        <label>Current mileage <small>KM</small>
+          <input type="number" name="mileage" min="0" value="{{ data.mileage }}" required>
+        </label>
+        <label>Since last service <small>KM</small>
+          <input type="number" name="service" min="0" value="{{ data.service }}" required>
+        </label>
+        <label>Fuel / power type <small>Type</small>
+          <select name="fuel">
+          {% for v in ['Petrol','Diesel','Hybrid','Electric'] %}
+            <option {% if data.fuel == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+          </select>
+        </label>
+        <label>Driving usage <small>Pattern</small>
+          <select name="usage">
+          {% for v in ['Normal','Moderate','Heavy'] %}
+            <option {% if data.usage == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+          </select>
+        </label>
+        <label>Warning light <small>Dashboard</small>
+          <select name="warning">
+          {% for v in ['No','Yes'] %}
+            <option {% if data.warning == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+          </select>
+        </label>
+        <label class="wide">Overall condition <small>Current assessment</small>
+          <select name="condition">
+          {% for v in ['Good','Average','Poor'] %}
+            <option {% if data.condition == v %}selected{% endif %}>{{ v }}</option>
+          {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <button class="btn primary full" type="submit">Analyze vehicle <b>→</b></button>
+      <div class="form-note">Your inputs are processed by the Python Flask application.</div>
+    </form>
+
+    <div class="panel result-panel">
+      <div class="panel-title">
+        <div><span>02</span><h3>Prediction result</h3></div>
+        <small class="model-tag">MODEL v1.0</small>
+      </div>
+
+      {% if result %}
+      <div class="score-wrap {{ result.tone }}">
+        <div class="score-ring">
+          <div><strong>{{ result.score }}</strong><small>/100</small></div>
+        </div>
+      </div>
+      <div class="risk-badge {{ result.tone }}"><i></i>{{ result.level }}</div>
+      <h4>{{ result.action }}</h4>
+      <div class="action-box">
+        <span>Recommended service window</span><b>{{ result.window }}</b>
+      </div>
+      <div class="advice">
+        {% for item in result.advice %}
+        <div><i>✓</i>{{ item }}</div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="result-empty">
+        <div class="empty-icon">⌁</div>
+        <h4>Ready when you are</h4>
+        <p>Submit the vehicle profile to generate a maintenance risk assessment.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section id="how" class="section dark">
+  <div class="section-head">
+    <div><div class="eyebrow"><span></span> SYSTEM WORKFLOW</div><h2>Simple logic. Clear results.</h2></div>
+  </div>
+  <div class="steps">
+    <article><b>01</b><span>COLLECT</span><h3>Vehicle data</h3><p>Age, mileage, service gap, usage, warning indicators and condition are collected.</p></article>
+    <article><b>02</b><span>CALCULATE</span><h3>Risk score</h3><p>Each factor contributes weighted points to a normalized 0–100 maintenance score.</p></article>
+    <article><b>03</b><span>CLASSIFY</span><h3>Risk level</h3><p>The score is classified into low, medium or high maintenance risk.</p></article>
+    <article><b>04</b><span>RECOMMEND</span><h3>Action plan</h3><p>The system suggests a service window and practical inspection checklist.</p></article>
+  </div>
+</section>
+
+<section id="iks" class="section">
+  <div class="section-head">
+    <div><div class="eyebrow"><span></span> INDIAN KNOWLEDGE SYSTEMS</div><h2>Traditional knowledge × modern IT</h2></div>
+    <p>The IKS component provides an educational connection between historical Indian metallurgical knowledge and modern automotive engineering.</p>
+  </div>
+
+  <div class="iks-grid">
+    <article class="iks-main">
+      <div class="iks-number">IKS</div>
+      <h3>Indian metallurgical heritage</h3>
+      <p>Indian knowledge traditions include historical expertise in iron, steel and metalworking. Modern vehicle components also rely on engineered metallic materials.</p>
+      <div class="connection">
+        <span>Traditional metallurgy</span><b>→</b>
+        <span>Material knowledge</span><b>→</b>
+        <span>Automotive engineering</span><b>→</b>
+        <span>Digital maintenance</span>
+      </div>
+    </article>
+    <article class="iks-side">
+      <span>ACADEMIC SCOPE</span>
+      <h3>Why it is included</h3>
+      <p>This module demonstrates how an IT project can document an IKS topic while using modern software to present and organize information.</p>
+      <div class="notice">The prediction algorithm itself uses vehicle-maintenance inputs, not ancient metallurgical knowledge.</div>
+    </article>
+  </div>
+</section>
+
+<section id="about" class="section dark">
+  <div class="section-head">
+    <div><div class="eyebrow"><span></span> PROJECT INFORMATION</div><h2>Built for an academic demonstration</h2></div>
+  </div>
+  <div class="about-grid">
+    <div><b>TECHNOLOGY</b><h3>Python + Flask + HTML + CSS + JS</h3><p>Simple architecture keeps the application easy to understand, run and deploy.</p></div>
+    <div><b>DEPLOYMENT</b><h3>Python hosting or local computer</h3><p>Run locally with Python. Online deployment can use any hosting platform supporting Flask/Python.</p></div>
+    <div><b>FUTURE SCOPE</b><h3>Database + real ML</h3><p>Future versions can add MySQL/SQLite, service history, authentication, reminders and a trained machine-learning model.</p></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <b>AutoCare</b>
+  <span>Car Maintenance Prediction System</span>
+  <small>TY IT • Individual Academic Project</small>
+</footer>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
