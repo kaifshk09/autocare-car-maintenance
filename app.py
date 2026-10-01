@@ -1,130 +1,76 @@
-import os
+import streamlit as st
 
-from flask import Flask, render_template, request
+from logic import calculate_prediction, default_payload, parse_form_data
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "autocare-dev-secret-key")
-
-
-def safe_int(value, default=0):
-    if value is None:
-        return default
-    if isinstance(value, (int, float)):
-        return max(0, int(value))
-
-    text = str(value).strip()
-    if not text:
-        return default
-
-    try:
-        return max(0, int(float(text)))
-    except (TypeError, ValueError):
-        return default
+st.set_page_config(page_title="AutoCare AI", page_icon="🚗", layout="wide")
 
 
-def default_payload():
-    return {
-        "age": 5,
-        "mileage": 50000,
-        "service": 7000,
-        "usage": "Normal",
-        "warning": "No",
-        "condition": "Good",
-        "fuel": "Petrol",
-    }
+def render_result(result):
+    if not result:
+        st.info("Submit the vehicle profile to generate a maintenance risk assessment.")
+        return
+
+    score = result["score"]
+    tone = result["tone"]
+    color = {
+        "low": "#2ecc71",
+        "medium": "#f39c12",
+        "high": "#e74c3c",
+    }.get(tone, "#2ecc71")
+
+    st.markdown(f"<div style='padding:1rem 1.2rem; border-radius:12px; background:{color}; color:white; font-weight:700; text-align:center; margin-bottom:1rem;'>Risk Level: {result['level']}</div>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Maintenance Score", f"{score}/100")
+    with col2:
+        st.metric("Recommended Window", result["window"])
+
+    st.subheader(result["action"])
+    st.write("Recommended checks:")
+    for item in result["advice"]:
+        st.write(f"- {item}")
 
 
-def parse_form_data(form_data):
-    return {
-        "age": safe_int(form_data.get("age", 0)),
-        "mileage": safe_int(form_data.get("mileage", 0)),
-        "service": safe_int(form_data.get("service", 0)),
-        "usage": form_data.get("usage", "Normal"),
-        "warning": form_data.get("warning", "No"),
-        "condition": form_data.get("condition", "Good"),
-        "fuel": form_data.get("fuel", "Petrol"),
-    }
+def main():
+    data = default_payload()
 
+    st.title("AutoCare AI")
+    st.caption("Vehicle Maintenance Intelligence")
 
-def calculate_prediction(data):
-    age = safe_int(data.get("age", 0))
-    mileage = safe_int(data.get("mileage", 0))
-    service = safe_int(data.get("service", 0))
-    usage = data.get("usage", "Normal")
-    warning = data.get("warning", "No")
-    condition = data.get("condition", "Good")
+    with st.container():
+        col1, col2 = st.columns([1.2, 1.1])
 
-    # Simple, transparent weighted scoring model for an academic project.
-    score = 0
-    score += min(25, age * 3)
-    score += min(30, mileage / 5000)
-    score += min(20, service / 500)
-    score += 10 if usage == "Heavy" else (5 if usage == "Moderate" else 0)
-    score += 15 if warning == "Yes" else 0
-    score += 12 if condition == "Poor" else (6 if condition == "Average" else 0)
-    score = int(round(min(100, score)))
+        with col1:
+            st.subheader("Vehicle information")
+            age = st.number_input("Car age (years)", min_value=0, max_value=50, value=data["age"])
+            mileage = st.number_input("Current mileage (km)", min_value=0, value=data["mileage"])
+            service = st.number_input("Distance since last service (km)", min_value=0, value=data["service"])
+            fuel = st.selectbox("Fuel / power type", ["Petrol", "Diesel", "Hybrid", "Electric"], index=["Petrol", "Diesel", "Hybrid", "Electric"].index(data["fuel"]))
+            usage = st.selectbox("Driving usage", ["Normal", "Moderate", "Heavy"], index=["Normal", "Moderate", "Heavy"].index(data["usage"]))
+            warning = st.selectbox("Warning light", ["No", "Yes"], index=["No", "Yes"].index(data["warning"]))
+            condition = st.selectbox("Overall condition", ["Good", "Average", "Poor"], index=["Good", "Average", "Poor"].index(data["condition"]))
 
-    if score >= 70:
-        level = "High Risk"
-        tone = "high"
-        window = "Within 7 days"
-        action = "Immediate maintenance inspection is recommended."
-        advice = [
-            "Check engine and warning indicators",
-            "Inspect brakes, tyres and fluids",
-            "Review overdue service items",
-        ]
-    elif score >= 40:
-        level = "Medium Risk"
-        tone = "medium"
-        window = "Within 30 days"
-        action = "Schedule a preventive maintenance inspection soon."
-        advice = [
-            "Check service schedule",
-            "Inspect fluids and filters",
-            "Monitor warning indicators",
-        ]
-    else:
-        level = "Low Risk"
-        tone = "low"
-        window = "Within 90 days"
-        action = "Continue scheduled preventive maintenance."
-        advice = [
-            "Follow manufacturer service intervals",
-            "Monitor tyre pressure and fluids",
-            "Keep service records updated",
-        ]
+        with col2:
+            st.subheader("Prediction result")
+            test_payload = {
+                "age": age,
+                "mileage": mileage,
+                "service": service,
+                "fuel": fuel,
+                "usage": usage,
+                "warning": warning,
+                "condition": condition,
+            }
+            result = calculate_prediction(test_payload)
+            render_result(result)
 
-    return {
-        "score": score,
-        "level": level,
-        "tone": tone,
-        "window": window,
-        "action": action,
-        "advice": advice,
-    }
-
-
-@app.route("/", methods=["GET", "POST"])
-def home():
-    payload = default_payload()
-    result = None
-
-    if request.method == "POST":
-        payload = parse_form_data(request.form)
-        result = calculate_prediction(payload)
-
-    return render_template("index.html", result=result, data=payload)
-
-
-@app.get("/health")
-def health():
-    return {"status": "ok", "service": "AutoCare", "version": "1.0.0"}, 200
+    st.markdown("---")
+    st.subheader("System workflow")
+    st.write("1. Collect vehicle inputs")
+    st.write("2. Calculate weighted risk score")
+    st.write("3. Classify low, medium or high maintenance risk")
+    st.write("4. Deliver maintenance advice and service guidance")
 
 
 if __name__ == "__main__":
-    app.run(
-        host=os.getenv("HOST", "0.0.0.0"),
-        port=int(os.getenv("PORT", "5000")),
-        debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
-    )
+    main()
